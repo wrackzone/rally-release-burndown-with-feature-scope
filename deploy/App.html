@@ -3,11 +3,11 @@
 <head>
     <title>Release Burndown with Feature Scope</title>
     <!--  (c) 2014 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Wed Feb 05 2014 08:07:47 GMT-0800 (PST) -->
+    <!--  Build Date: Wed Feb 05 2014 08:47:10 GMT-0800 (PST) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Wed Feb 05 2014 08:07:47 GMT-0800 (PST)";
-        var CHECKSUM = 28959502717;
+        var APP_BUILD_DATE = "Wed Feb 05 2014 08:47:10 GMT-0800 (PST)";
+        var CHECKSUM = 29681169802;
     </script>
     
     <script type="text/javascript" src="/apps/2.0rc2/sdk.js"></script>
@@ -543,6 +543,16 @@ Ext.define('CustomApp', {
                         type: 'area'
                     },
                     title: { text: 'Release Burn Down', align: 'center' },
+                    tooltip: {
+                        formatter: function() {
+                            if ( /deal/.test(this.series.name) ) {
+                                return false;
+                            } else {
+                                return this.x + '<br/>' +
+                                    this.series.name + ': <b>'+ this.y +'</b>';
+                            }
+                        }
+                    },
                     xAxis: [{
                         categories: categories,
                          tickLength: 0,

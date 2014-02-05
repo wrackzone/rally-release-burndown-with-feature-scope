@@ -171,6 +171,16 @@ Ext.define('CustomApp', {
                         type: 'area'
                     },
                     title: { text: 'Release Burn Down', align: 'center' },
+                    tooltip: {
+                        formatter: function() {
+                            if ( /deal/.test(this.series.name) ) {
+                                return false;
+                            } else {
+                                return this.x + '<br/>' +
+                                    this.series.name + ': <b>'+ this.y +'</b>';
+                            }
+                        }
+                    },
                     xAxis: [{
                         categories: categories,
                          tickLength: 0,
