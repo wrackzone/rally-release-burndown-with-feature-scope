@@ -18,7 +18,9 @@
         {name:'wpAcceptedTotal',type:'number',defaultValue:0},
         {name:'leafSizeFieldName',type:'string',defaultValue:'LeafStoryPlanEstimateTotal'},
         {name:'leafAcceptedSizeFieldName',type:'string',defaultValue:'AcceptedLeafStoryPlanEstimateTotal'},
-        {name:'leafAcceptedTotal',type:'number',defaultValue:0},
+        {name:'leafAcceptedTotal',type:'number',defaultValue:0}, /* doesn't care about feature */
+        {name:'leafUnacceptedTotal',type:'number',defaultValue:0}, /* cares about feature */
+        {name:'piUnacceptedTotal',type:'number',defaultValue:0}, /* cares about feature */
         {name:'leafTotal',type:'number',defaultValue:0}
     ],
     constructor: function(data) {
@@ -45,15 +47,18 @@
         var pi_total = this.get('piSizeTotal');
         var leaf_total = this.get('leafTotal');
         var leaf_acceptance_total = this.get('leafAcceptedTotal');
+        var leaf_unaccepted_total = this.get('leafUnacceptedTotal');
+        var pi_unaccepted_total = this.get('piUnacceptedTotal');
         
         var pi_field_name = this.get('piSizeFieldName');
         var leaf_size_field_name = this.get('leafSizeFieldName');
         var leaf_accepted_size_field_name = this.get('leafAcceptedSizeFieldName');
         
+        var percent_done = snap.get('PercentDoneByStoryPlanEstimate');
         var pi_value_in_snap = 0;
         var leaf_value_in_snap = 0;
         var leaf_accepted_value_in_snap = 0;
-        
+
         if ( pi_field_name === "Count" ) {
             pi_value_in_snap = 1;
         } else {
@@ -69,11 +74,19 @@
         }
 
         pi_total = pi_total + pi_value_in_snap;
+                
+        if ( percent_done < 1 ) {
+            leaf_unaccepted_total = leaf_unaccepted_total + leaf_value_in_snap;
+            pi_unaccepted_total = pi_unaccepted_total + pi_value_in_snap;
+        }
+        
         leaf_total = leaf_total + leaf_value_in_snap;
         leaf_acceptance_total = leaf_acceptance_total + leaf_accepted_value_in_snap;
         this.set('piSizeTotal',pi_total);
         this.set('leafTotal',leaf_total);
         this.set('leafAcceptedTotal',leaf_acceptance_total);
+        this.set('piUnacceptedTotal',pi_unaccepted_total);
+        this.set('leafUnacceptedTotal',leaf_unaccepted_total);
     },
     _updateWPData:function(snap){
         var wp_total = this.get('wpSizeTotal');

@@ -69,7 +69,7 @@ Ext.define('CustomApp', {
         this.config = {
             start_date:start_date,
             end_date:end_date,
-            day_to_week_switch_point: 30,
+            day_to_week_switch_point: 60,
             baseline_field_name: field_name,
             release_oids: release_oids,
             model_types: model_types
@@ -107,7 +107,7 @@ Ext.define('CustomApp', {
         
         var fetch = [ me.alternate_pi_size_field,me.alternate_wp_size_field,
             me.alternate_leaf_size_field, me.alternate_leaf_accepted_size_field,
-            "_TypeHierarchy","ScheduleState"];
+            "_TypeHierarchy","ScheduleState","PercentDoneByStoryPlanEstimate"];
 
         if ( day < new Date() ) {
             this.logger.log("creating store");
@@ -151,6 +151,9 @@ Ext.define('CustomApp', {
         var increment = this._getIncrement(days);
 
         this.down('#chart_box').removeAll(true);
+        //var colors = ['#FF3333','#FF3333','#FF99FF','#000','#000','#99ADC2','#3399FF','#6ab17d'];
+        var colors = ['#6699FF','#6699FF','#CC9900','#CC9900'];
+        
         if ( categories[0] > new Date() ) {
             this.down('#chart_box').add({
                 xtype:'container',
@@ -159,7 +162,7 @@ Ext.define('CustomApp', {
             this._unmask();
         } else {
             var chart = Ext.create('Rally.ui.chart.Chart',{
-                chartColors: ['#5C9ACB','#5C9ACB','#000','#000','#0033FF','#f47168'],
+                chartColors: colors,
                 chartData: {
                     series: series
                 },
@@ -190,7 +193,7 @@ Ext.define('CustomApp', {
                     }
                 }
             });
-            chart.setChartColors(['#5C9ACB','#5C9ACB','#000','#000','#0033FF','#f47168']);
+            chart.setChartColors(colors);
             this.down('#chart_box').add(chart);
         }        
     },
@@ -212,6 +215,7 @@ Ext.define('CustomApp', {
         var leaf_size_data = [];
         var leaf_accepted_size_data = [];
         var leaf_todo_size_data = [];
+        var pi_todo_size_data = [];
         
         Ext.Array.each(days, function(day){
             var pi_size = day.get('piSizeTotal');
@@ -219,7 +223,9 @@ Ext.define('CustomApp', {
             var wp_accepted_size = day.get('wpAcceptedTotal');
             var leaf_size = day.get('leafTotal');
             var leaf_accepted_size = day.get('leafAcceptedTotal');
-            var leaf_todo_size = leaf_size - leaf_accepted_size;
+            //var leaf_todo_size = leaf_size - leaf_accepted_size;
+            var pi_todo_size = day.get('piUnacceptedTotal'); 
+            var leaf_todo_size = day.get('leafUnacceptedTotal'); 
             
             if ( day.get('JSDate') > new Date() ) {
                 pi_size = null;
@@ -228,6 +234,7 @@ Ext.define('CustomApp', {
                 leaf_size = null;
                 leaf_accepted_size = null;
                 leaf_todo_size = null;
+                pi_todo_size = null;
             }
             pi_size_data.push(pi_size);
             wp_size_data.push(wp_size);
@@ -235,23 +242,65 @@ Ext.define('CustomApp', {
             leaf_size_data.push(leaf_size);
             leaf_accepted_size_data.push(leaf_accepted_size);
             leaf_todo_size_data.push(leaf_todo_size);
+            pi_todo_size_data.push(pi_todo_size);
         });
         
-        var pi_extension_data = this._getExtensionArray(pi_size_data);
-        var leaf_extension_data = this._getExtensionArray(leaf_size_data);
-        var ideal_data = this._getIdealLine(leaf_size_data);
+//        var pi_extension_data = this._getExtensionArray(pi_size_data);
+        var ideal_data_by_pi = this._getIdealLine(pi_size_data);        
+//        series.push({type:'line',name:'Feature Scope',data:pi_size_data});
+//        series.push({type:'line',name:'Feature Scope (extended)',data:pi_extension_data,dashStyle: 'dash',showInLegend: false});
+
+//        var leaf_extension_data = this._getExtensionArray(leaf_size_data);
+        var ideal_data_by_leaf = this._getIdealLine(leaf_size_data);
+//        series.push({type:'line',name:'Leaf Story Scope',data:leaf_size_data});
+//        series.push({type:'line',name:'Leaf Story Scope (extended)',data:leaf_extension_data,dashStyle: 'dash',showInLegend: false});
         
-        series.push({type:'line',name:'Feature Scope',data:pi_size_data});
-        series.push({type:'line',name:'Feature Scope (extended)',data:pi_extension_data,dashStyle: 'dash',showInLegend: false});
-//        series.push({type:'line',name:'WorkProduct Scope',data:wp_size_data});
-//        series.push({type:'area',name:'WorkProduct Burn Up',data:wp_accepted_data});
-        series.push({type:'line',name:'Leaf Story Scope',data:leaf_size_data});
-        series.push({type:'line',name:'Leaf Story Scope (extended)',data:leaf_extension_data,dashStyle: 'dash',showInLegend: false});
+        series.push({type:'column',name:'Remaining Story Points',data:leaf_todo_size_data});
+        series.push({type:'line',name:'Ideal (by Story Scope)',data:ideal_data_by_leaf});
+        series.push({type:'column',name:'Remaining Feature Points',data:pi_todo_size_data});
+        series.push({type:'line',name:'Ideal (by Feature Scope)',data:ideal_data_by_pi});
+       
+        //series.push({type:'column',name:'Accepted',data:leaf_accepted_size_data});
 
-        series.push({type:'area',name:'To Do (Pts)',data:leaf_todo_size_data});
-        series.push({type:'line',name:'Ideal',data:ideal_data});
-
+//        var leaf_trend_data = this._getTrendData(leaf_size_data,leaf_accepted_size_data);
+//        series.push({type:'line',name:'Trend',data:leaf_trend_data});
         return series;
+    },
+    _getTrendData: function(scope_data,accepted_data) {
+        var trend = [];
+        Ext.Array.each(scope_data, function(size){
+            trend.push(null);
+        });
+        var scope = null;
+        var accepted = null;
+        var accepted_index = null;
+        Ext.Array.each(scope_data,function(size){
+            if ( size !== null ) {
+                scope = size;
+            }
+        });
+        Ext.Array.each(accepted_data,function(size,index){
+            if ( size !== null ) {
+                accepted = size;
+                accepted_index = index;
+            }
+        });
+        
+        if ( accepted && accepted > 0 && accepted_index > 0) {
+            trend = [];
+            var incline = accepted / accepted_index;
+            var point = 0 - incline;
+            Ext.Array.each(scope_data,function(size){
+                if ( point !== null ) {
+                    point = point + incline;
+                }
+                trend.push(point);
+                if ( point > scope ) {
+                    point = null;
+                }
+            });
+        }
+        return trend;
     },
     _getIdealLine: function(size_data){
         this.logger.log("_getIdealLine",size_data);
@@ -265,7 +314,6 @@ Ext.define('CustomApp', {
             ideal_line.push(parseFloat(Ext.util.Format.number(next_point,'0.00'),10));
             next_point = next_point - decline;
         });
-        this.logger.log(ideal_line);
         return ideal_line;
     },
     _getExtensionArray: function(size_data) {

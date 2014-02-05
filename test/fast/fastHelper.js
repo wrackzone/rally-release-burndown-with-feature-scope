@@ -57,6 +57,7 @@ Ext.define('mockSnap',{
         {name:'AcceptedLeafStoryPlanEstimateTotal',type:'float'},
         {name:'LeafStoryPlanEstimateTotal',type:'float'},
         {name:'AcceptedLeafStoryCount',type:'float'},
-        {name:'LeafStoryCount',type:'float'}
+        {name:'LeafStoryCount',type:'float'},
+        {name:'PercentDoneByStoryPlanEstimate',type:'float'}
     ]
 });
