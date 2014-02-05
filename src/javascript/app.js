@@ -152,7 +152,7 @@ Ext.define('CustomApp', {
 
         this.down('#chart_box').removeAll(true);
         //var colors = ['#FF3333','#FF3333','#FF99FF','#000','#000','#99ADC2','#3399FF','#6ab17d'];
-        var colors = ['#CC9900','#CC9900','#6699FF','#6699FF'];
+        var colors = ['#CC8800','#CC8800','#6699FF','#6699FF'];
         
         if ( categories[0] > new Date() ) {
             this.down('#chart_box').add({
