@@ -255,11 +255,10 @@ Ext.define('CustomApp', {
 //        series.push({type:'line',name:'Leaf Story Scope',data:leaf_size_data});
 //        series.push({type:'line',name:'Leaf Story Scope (extended)',data:leaf_extension_data,dashStyle: 'dash',showInLegend: false});
         
-        series.push({type:'column',name:'Remaining Story Points',data:leaf_todo_size_data});
-        series.push({type:'line',name:'Ideal (by Story Scope)',data:ideal_data_by_leaf});
         series.push({type:'column',name:'Remaining Feature Points',data:pi_todo_size_data});
         series.push({type:'line',name:'Ideal (by Feature Scope)',data:ideal_data_by_pi});
-       
+        series.push({type:'column',name:'Remaining Story Points',data:leaf_todo_size_data});
+        series.push({type:'line',name:'Ideal (by Story Scope)',data:ideal_data_by_leaf});
         //series.push({type:'column',name:'Accepted',data:leaf_accepted_size_data});
 
 //        var leaf_trend_data = this._getTrendData(leaf_size_data,leaf_accepted_size_data);
