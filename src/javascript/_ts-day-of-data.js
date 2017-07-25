@@ -53,7 +53,7 @@
         var pi_field_name = this.get('piSizeFieldName');
         var leaf_size_field_name = this.get('leafSizeFieldName');
         var leaf_accepted_size_field_name = this.get('leafAcceptedSizeFieldName');
-        
+
         var percent_done = snap.get('PercentDoneByStoryPlanEstimate');
         var pi_value_in_snap = 0;
         var leaf_value_in_snap = 0;
@@ -72,6 +72,8 @@
         if (Ext.isNumber(snap.get(leaf_accepted_size_field_name))){
             leaf_accepted_value_in_snap = snap.get(leaf_accepted_size_field_name);
         }
+        console.log("size/accepted:",leaf_value_in_snap,leaf_accepted_value_in_snap);
+
 
         pi_total = pi_total + pi_value_in_snap;
                 
@@ -87,6 +89,7 @@
         this.set('leafAcceptedTotal',leaf_acceptance_total);
         this.set('piUnacceptedTotal',pi_unaccepted_total);
         this.set('leafUnacceptedTotal',leaf_unaccepted_total);
+        console.log(pi_total,leaf_total,leaf_acceptance_total,leaf_unaccepted_total,leaf_unaccepted_total);
     },
     _updateWPData:function(snap){
         var wp_total = this.get('wpSizeTotal');

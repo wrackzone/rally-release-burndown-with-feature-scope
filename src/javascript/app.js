@@ -64,6 +64,20 @@ Ext.define('CustomApp', {
         var me = this;
         this._mask("Loading Historical Data");
 
+        // if configured set the feature oids to limit the query
+        console.log( "Feature(s)", this.getSetting("thefeature"));
+        var thefeaturestring = this.getSetting("thefeature");
+        var featureOids = []
+        if (thefeaturestring && thefeaturestring!="") {
+            var thefeaturestrings = thefeaturestring.split(",");
+            // ref = "/portfolioitem/feature/78813399856" -> "78813399856"
+            featureOids = _.map(thefeaturestrings, function(s) {
+                return parseInt(_.last(s.split("/")));
+            });
+        }
+        console.log("FeatureOIDs",featureOids);
+
+
         //var model_types =  ['HierarchicalRequirement','Defect','TestSet','PortfolioItem'];
         var model_types = ['PortfolioItem'];
         this.config = {
@@ -72,7 +86,8 @@ Ext.define('CustomApp', {
             day_to_week_switch_point: 60,
             baseline_field_name: field_name,
             release_oids: release_oids,
-            model_types: model_types
+            model_types: model_types,
+            feature_oids : featureOids
         };
         var config = this.config;
         this.logger.log("Getting array of days ",config.start_date,config.end_date,true,config.day_to_week_switch_point);
@@ -109,18 +124,29 @@ Ext.define('CustomApp', {
             me.alternate_leaf_size_field, me.alternate_leaf_accepted_size_field,
             "_TypeHierarchy","ScheduleState","PercentDoneByStoryPlanEstimate"];
 
+        var filters = [
+            {property:'Release',operator:'in',value:config.release_oids},
+            {property:'_TypeHierarchy',operator:'in',value:config.model_types},
+            {property:'__At',operator:'=',value:Rally.util.DateTime.toIsoString(day)},
+            {property:'_ProjectHierarchy', value:project}
+        ];
+
+        // if we have configured features then filter to just those features.
+        if (config.feature_oids && config.feature_oids.length>0) {
+            filters.push({
+                property:'ObjectID',operator:'in',value:config.feature_oids
+            });
+        }
+
+        console.log("Filters:",filters);
+
         if ( day < new Date() ) {
             this.logger.log("creating store");
             Ext.create('Rally.data.lookback.SnapshotStore',{
                 fetch: fetch,
                 hydrate: ['_TypeHierarchy','ScheduleState'],
                 autoLoad: true,
-                filters: [
-                    {property:'Release',operator:'in',value:config.release_oids},
-                    {property:'_TypeHierarchy',operator:'in',value:config.model_types},
-                    {property:'__At',operator:'=',value:Rally.util.DateTime.toIsoString(day)},
-                    {property:'_ProjectHierarchy', value:project}
-                ],
+                filters: filters,
                 listeners: {
                     load: function(store,snaps,success){
                         if (success) {
@@ -233,10 +259,13 @@ Ext.define('CustomApp', {
             var wp_accepted_size = day.get('wpAcceptedTotal');
             var leaf_size = day.get('leafTotal');
             var leaf_accepted_size = day.get('leafAcceptedTotal');
-            //var leaf_todo_size = leaf_size - leaf_accepted_size;
-            var pi_todo_size = day.get('piUnacceptedTotal'); 
-            var leaf_todo_size = day.get('leafUnacceptedTotal'); 
+            var leaf_todo_size = leaf_size - leaf_accepted_size;
             
+            var pi_todo_size = day.get('piUnacceptedTotal'); 
+            console.log("pi_todo_size",pi_todo_size);
+
+            // var leaf_todo_size = day.get('leafUnacceptedTotal'); 
+
             if ( day.get('JSDate') > new Date() ) {
                 pi_size = null;
                 wp_size = null;
@@ -372,5 +401,22 @@ Ext.define('CustomApp', {
         setTimeout(function(){
             me.setLoading(false);
         },10);
+    },
+
+    config: {
+        defaultSettings: {
+            thefeature: null
+        }
+    },
+
+    getSettingsFields: function() {
+        return [
+            {
+                name: 'thefeature',
+                xtype: 'rallymultiobjectpicker',
+                modelType: 'portfolioitem/feature',
+                width : 400
+            },
+        ];
     }
 });
