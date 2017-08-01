@@ -13,8 +13,34 @@ Ext.define('CustomApp', {
         {xtype:'tsinfolink'}
     ],
     launch: function() {
-        this._addReleaseSelector(this.down('#selector_box'));
+        this._loadPortfolioFeatureType().then({
+            scope: this,
+            success:function(featureType) {
+                this.featureType = featureType;
+                this._addReleaseSelector(this.down('#selector_box'));
+            }
+        })
     },
+
+    _loadPortfolioFeatureType : function() {
+
+        var deferred = Ext.create('Deft.Deferred');
+        Ext.create('Rally.data.wsapi.Store',{
+            model:'TypeDefinition',
+            fetch: ["TypePath"],
+            filters: [{property:'Ordinal',operatpr:"=",value:0}],
+            autoLoad: true,
+            listeners: {
+                scope: this,
+                load: function(store,types) {
+                    console.log(_.first(types).get("TypePath"));
+                    deferred.resolve( _.first(types).get("TypePath"));
+                }
+            }
+        });
+        return deferred;
+    },
+
     _addReleaseSelector: function(container) {
         container.add({
             xtype:'rallyreleasecombobox',
@@ -112,7 +138,7 @@ Ext.define('CustomApp', {
         
         var deferred = Ext.create('Deft.Deferred');
         
-        this.logger.log("fetching snapshots at ", day);
+        // this.logger.log("fetching snapshots at ", day);
         var project = this.getContext().getProject().ObjectID;
         var day_calculator = Ext.create('TSDay',{
             piSizeFieldName: me.alternate_pi_size_field,
@@ -141,7 +167,7 @@ Ext.define('CustomApp', {
         console.log("Filters:",filters);
 
         if ( day < new Date() ) {
-            this.logger.log("creating store");
+            // this.logger.log("creating store");
             Ext.create('Rally.data.lookback.SnapshotStore',{
                 fetch: fetch,
                 hydrate: ['_TypeHierarchy','ScheduleState'],
@@ -150,7 +176,7 @@ Ext.define('CustomApp', {
                 listeners: {
                     load: function(store,snaps,success){
                         if (success) {
-                            this.logger.log("snaps",snaps);
+                            // this.logger.log("snaps",snaps);
     
                             Ext.Array.each(snaps, function(snap){
                                 day_calculator.addSnap(snap);
@@ -260,7 +286,7 @@ Ext.define('CustomApp', {
             var leaf_size = day.get('leafTotal');
             var leaf_accepted_size = day.get('leafAcceptedTotal');
             var leaf_todo_size = leaf_size - leaf_accepted_size;
-            
+
             var pi_todo_size = day.get('piUnacceptedTotal'); 
             console.log("pi_todo_size",pi_todo_size);
 
@@ -413,8 +439,10 @@ Ext.define('CustomApp', {
         return [
             {
                 name: 'thefeature',
+                fieldLabel : "Select Feature(s) to filter",
                 xtype: 'rallymultiobjectpicker',
-                modelType: 'portfolioitem/feature',
+                // modelType: 'portfolioitem/feature',
+                modelType : this.featureType,
                 width : 400
             },
         ];
